@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Windows.Forms;
 using System.Windows.Threading;
@@ -148,7 +149,12 @@ namespace ManagedShell.AppBar
         private void ResetScreenCache()
         {
             // use reflection to empty screens cache
-            typeof(Screen).GetField("screens", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic).SetValue(null, null);
+            var screens_field = typeof(Screen).GetField("screens", BindingFlags.Static | BindingFlags.NonPublic);
+            screens_field?.SetValue(null, null);
+
+            //.net 8 screens field rnamed to s_screens
+            var s_screens_field = typeof(Screen).GetField("s_screens", BindingFlags.Static | BindingFlags.NonPublic);
+            s_screens_field?.SetValue(null, null);
         }
 
         public void NotifyScreensChanged()

@@ -420,6 +420,8 @@ namespace ManagedShell.WindowsTasks
 
         private void setIcon()
         {
+            // icons not used
+        /*
             if (!_iconLoading && ShowInTaskbar)
             {
                 _iconLoading = true;
@@ -525,6 +527,7 @@ namespace ManagedShell.WindowsTasks
                     _iconLoading = false;
                 }, CancellationToken.None, TaskCreationOptions.None, IconHelper.IconScheduler);
             }
+        */
         }
 
         internal void SetMonitor()

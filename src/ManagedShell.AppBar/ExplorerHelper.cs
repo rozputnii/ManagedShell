@@ -128,7 +128,9 @@ namespace ManagedShell.AppBar
             {
                 if (startupTaskbarState == null)
                 {
-                    startupTaskbarState = GetTaskbarState();
+                    // set OnTop if Default -> the default state can be AutoHide!
+                    var staste = GetTaskbarState();
+                    startupTaskbarState = staste == ABState.Default ? ABState.OnTop : ABState.Default;
                 }
 
                 if (HideExplorerTaskbar)
@@ -149,7 +151,10 @@ namespace ManagedShell.AppBar
         {
             if (!EnvironmentHelper.IsAppRunningAsShell)
             {
-                SetTaskbarState(startupTaskbarState ?? ABState.Default);
+                startupTaskbarState ??= ABState.OnTop;
+                var newState = startupTaskbarState == ABState.Default ? ABState.OnTop : startupTaskbarState.Value;
+                SetTaskbarState(newState);
+                                
                 SetTaskbarVisibility((int)SetWindowPosFlags.SWP_SHOWWINDOW);
                 taskbarMonitor.Stop();
             }
