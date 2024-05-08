@@ -10,7 +10,6 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using Application = System.Windows.Application;
 
 namespace ManagedShell.AppBar
 {

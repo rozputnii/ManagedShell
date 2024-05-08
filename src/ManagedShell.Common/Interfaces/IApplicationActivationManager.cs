@@ -15,7 +15,6 @@
 
 // refer to https://docs.microsoft.com/en-us/windows/desktop/api/shobjidl_core/nn-shobjidl_core-iapplicationactivationmanager for more details regarding IApplicationActivationManager
 
-using System;
 using System.Runtime.InteropServices;
 
 namespace ManagedShell.Common.Interfaces
