@@ -86,15 +86,15 @@ namespace ManagedShell.Interop
             if (apartmentState != ApartmentState.MTA && apartmentState != ApartmentState.STA)
                 throw new ArgumentException("apartementState");
 
-            this.ApartmentState = apartmentState;
-            this._cancellationToken = new CancellationTokenSource();
-            this._tasks = new BlockingCollection<Task>();
-            this._initAction = initAction ?? (() => { });
+            ApartmentState = apartmentState;
+            _cancellationToken = new CancellationTokenSource();
+            _tasks = new BlockingCollection<Task>();
+            _initAction = initAction ?? (() => { });
 
-            this._thread = new Thread(this.ThreadStart);
-            this._thread.IsBackground = true;
-            this._thread.TrySetApartmentState(apartmentState);
-            this._thread.Start();
+            _thread = new Thread(ThreadStart);
+            _thread.IsBackground = true;
+            _thread.TrySetApartmentState(apartmentState);
+            _thread.Start();
         }
 
 
@@ -109,13 +109,13 @@ namespace ManagedShell.Interop
         /// </exception>
         public void Wait()
         {
-            if (this._cancellationToken.IsCancellationRequested)
+            if (_cancellationToken.IsCancellationRequested)
                 throw new TaskSchedulerException("Cannot wait after disposal.");
 
-            this._tasks.CompleteAdding();
-            this._thread.Join();
+            _tasks.CompleteAdding();
+            _thread.Join();
 
-            this._cancellationToken.Cancel();
+            _cancellationToken.Cancel();
         }
 
         /// <summary>
@@ -126,60 +126,60 @@ namespace ManagedShell.Interop
         /// </remarks>
         public void Dispose()
         {
-            if (this._cancellationToken.IsCancellationRequested)
+            if (_cancellationToken.IsCancellationRequested)
                 return;
 
-            this._tasks.CompleteAdding();
-            this._cancellationToken.Cancel();
+            _tasks.CompleteAdding();
+            _cancellationToken.Cancel();
         }
 
         protected override void QueueTask(Task task)
         {
-            this.VerifyNotDisposed();
+            VerifyNotDisposed();
 
-            this._tasks.Add(task, this._cancellationToken.Token);
+            _tasks.Add(task, _cancellationToken.Token);
         }
 
         protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
         {
-            this.VerifyNotDisposed();
+            VerifyNotDisposed();
 
-            if (this._thread != Thread.CurrentThread)
+            if (_thread != Thread.CurrentThread)
                 return false;
-            if (this._cancellationToken.Token.IsCancellationRequested)
+            if (_cancellationToken.Token.IsCancellationRequested)
                 return false;
 
-            this.TryExecuteTask(task);
+            TryExecuteTask(task);
             return true;
         }
 
         protected override IEnumerable<Task> GetScheduledTasks()
         {
-            this.VerifyNotDisposed();
+            VerifyNotDisposed();
 
-            return this._tasks.ToArray();
+            return _tasks.ToArray();
         }
 
         private void ThreadStart()
         {
             try
             {
-                var token = this._cancellationToken.Token;
+                var token = _cancellationToken.Token;
 
-                this._initAction();
+                _initAction();
 
-                foreach (var task in this._tasks.GetConsumingEnumerable(token))
-                    this.TryExecuteTask(task);
+                foreach (var task in _tasks.GetConsumingEnumerable(token))
+                    TryExecuteTask(task);
             }
             finally
             {
-                this._tasks.Dispose();
+                _tasks.Dispose();
             }
         }
 
         private void VerifyNotDisposed()
         {
-            if (this._cancellationToken.IsCancellationRequested)
+            if (_cancellationToken.IsCancellationRequested)
                 throw new ObjectDisposedException(typeof(ComTaskScheduler).Name);
         }
     }

@@ -1,4 +1,5 @@
-﻿using ManagedShell.Common.Helpers;
+﻿using ManagedShell.Common.Extensions;
+using ManagedShell.Common.Helpers;
 using ManagedShell.Common.Logging;
 using ManagedShell.Interop;
 using System;
@@ -11,11 +12,11 @@ using System.Windows.Media;
 namespace ManagedShell.WindowsTasks
 {
     [DebuggerDisplay("Title: {Title}, Handle: {Handle}")]
-    public class ApplicationWindow : IEquatable<ApplicationWindow>, INotifyPropertyChanged, IDisposable
+    public class ApplicationWindow : IEquatable<ApplicationWindow>, INotifyPropertyChangedExtended, IDisposable
     {
         const int TITLE_LENGTH = 1024;
         private readonly TasksService _tasksService;
-        StringBuilder titleBuilder = new StringBuilder(TITLE_LENGTH);
+        private readonly StringBuilder _titleBuilder = new(TITLE_LENGTH);
 
         public ApplicationWindow(TasksService tasksService, IntPtr handle)
         {
@@ -103,18 +104,10 @@ namespace ManagedShell.WindowsTasks
 
         public string Category
         {
-            get
-            {
-                return _category;
-            }
-            set
-            {
-                if (value != _category)
-                {
-                    _category = value;
-                    OnPropertyChanged("Category");
-                }
-            }
+            get => _category is null && ShowInTaskbar
+                ? _category = _tasksService.TaskCategoryProvider?.GetCategory(this)
+                : _category;
+            set => this.SetProperty(ref _category, value);
         }
 
         private string _title;
@@ -134,21 +127,16 @@ namespace ManagedShell.WindowsTasks
 
         private void setTitle()
         {
-            string title = "";
+           
             try
             {
-                titleBuilder.Clear();
-                NativeMethods.GetWindowText(Handle, titleBuilder, TITLE_LENGTH + 1);
+                _titleBuilder.Clear();
+                NativeMethods.GetWindowText(Handle, _titleBuilder, TITLE_LENGTH + 1);
 
-                title = titleBuilder.ToString();
+                var title = _titleBuilder.ToString();
+                this.SetProperty(ref _title, title, nameof(Title));
             }
             catch { }
-
-            if (_title != title)
-            {
-                _title = title;
-                OnPropertyChanged("Title");
-            }
         }
 
         private bool _iconLoading;
@@ -164,62 +152,39 @@ namespace ManagedShell.WindowsTasks
 
                 return _icon;
             }
-            set
-            {
-                _icon = value;
-                OnPropertyChanged("Icon");
-            }
+            set => this.SetProperty(ref _icon, value);
         }
         
         private ImageSource _overlayIcon;
 
         public ImageSource OverlayIcon
         {
-            get
-            {
-                return _overlayIcon;
-            }
-            private set
-            {
-                _overlayIcon = value;
-                OnPropertyChanged("OverlayIcon");
-            }
+            get => _overlayIcon;
+            private set => this.SetProperty(ref _overlayIcon, value);
         }
 
         private string _overlayIconDescription;
 
         public string OverlayIconDescription
         {
-            get
-            {
-                return _overlayIconDescription;
-            }
-            private set
-            {
-                _overlayIconDescription = value;
-                OnPropertyChanged("OverlayIconDescription");
-            }
+            get => _overlayIconDescription;
+            private set => this.SetProperty(ref _overlayIconDescription, value);
         }
 
         private NativeMethods.TBPFLAG _progressState;
 
         public NativeMethods.TBPFLAG ProgressState
         {
-            get
-            {
-                return _progressState;
-            }
+            get => _progressState;
 
             set
             {
-                _progressState = value;
-
                 if (value == NativeMethods.TBPFLAG.TBPF_NOPROGRESS)
                 {
                     ProgressValue = 0;
                 }
 
-                OnPropertyChanged("ProgressState");
+                this.SetProperty(ref _progressState, ref value);
             }
         }
 
@@ -227,83 +192,35 @@ namespace ManagedShell.WindowsTasks
 
         public int ProgressValue
         {
-            get
-            {
-                return _progressValue;
-            }
+            get => _progressValue;
 
-            set
-            {
-                _progressValue = value;
-                OnPropertyChanged("ProgressValue");
-            }
+            set => this.SetProperty(ref _progressValue, ref value);
         }
 
         private WindowState _state;
 
         public WindowState State
         {
-            get
-            {
-                return _state;
-            }
+            get => _state;
 
-            set
-            {
-                _state = value;
-                OnPropertyChanged("State");
-            }
+            set => this.SetProperty(ref _state, ref value);
         }
 
         private IntPtr _hMonitor;
 
         public IntPtr HMonitor
         {
-            get
-            {
-                if (_hMonitor == IntPtr.Zero)
-                {
-                    SetMonitor();
-                }
-
-                return _hMonitor;
-            }
-
-            private set
-            {
-                if (_hMonitor != value)
-                {
-                    _hMonitor = value;
-                    OnPropertyChanged("HMonitor");
-                }
-            }
+            get => _hMonitor == IntPtr.Zero ? _hMonitor = GetCurrentMonitor() : _hMonitor;
+            private set => this.SetProperty(ref _hMonitor, ref value);
         }
 
-        public bool IsMinimized
-        {
-            get { return NativeMethods.IsIconic(Handle); }
-        }
+        public bool IsMinimized => NativeMethods.IsIconic(Handle);
 
-        public NativeMethods.WindowShowStyle ShowStyle
-        {
-            get { return GetWindowShowStyle(Handle); }
-        }
+        public NativeMethods.WindowShowStyle ShowStyle => GetWindowShowStyle(Handle);
 
-        public int WindowStyles
-        {
-            get
-            {
-                return NativeMethods.GetWindowLong(Handle, NativeMethods.GWL_STYLE);
-            }
-        }
+        public int WindowStyles => NativeMethods.GetWindowLong(Handle, NativeMethods.GWL_STYLE);
 
-        public int ExtendedWindowStyles
-        {
-            get
-            {
-                return NativeMethods.GetWindowLong(Handle, NativeMethods.GWL_EXSTYLE);
-            }
-        }
+        public int ExtendedWindowStyles => NativeMethods.GetWindowLong(Handle, NativeMethods.GWL_EXSTYLE);
 
         public bool CanAddToTaskbar
         {
@@ -326,36 +243,22 @@ namespace ManagedShell.WindowsTasks
         // True if this window should be shown in the taskbar
         public bool ShowInTaskbar
         {
-            get
+            get => _showInTaskbar ?? (_showInTaskbar = GetShowInTaskbar()).Value;
+            set => this.SetProperty(ref _showInTaskbar, ref value, callback: value =>
             {
-                if (_showInTaskbar == null)
-                {
-                    SetShowInTaskbar();
-                }
-
-                return (bool)_showInTaskbar;
-            }
-        }
-
-        public void SetShowInTaskbar()
-        {
-            bool showInTaskbar = getShowInTaskbar();
-
-            if (_showInTaskbar != showInTaskbar)
-            {
-                _showInTaskbar = showInTaskbar;
-
-                // If we are becoming visible in the taskbar, get the category if it hasn't been set yet
-                if (_showInTaskbar == true && Category == null)
+                if (value && Category is null)
                 {
                     Category = _tasksService.TaskCategoryProvider?.GetCategory(this);
                 }
-
-                OnPropertyChanged("ShowInTaskbar");
-            }
+            });
         }
 
-        private bool getShowInTaskbar()
+        public void UpdateShowInTaskbar()
+        {
+            ShowInTaskbar = GetShowInTaskbar();
+        }
+
+        private bool GetShowInTaskbar()
         {
             // EnumWindows and ShellHook return UWP app windows that are 'cloaked', which should not be visible in the taskbar.
             if (EnvironmentHelper.IsWindows8OrBetter)
@@ -412,7 +315,7 @@ namespace ManagedShell.WindowsTasks
         {
             ShellLogger.Debug($"ApplicationWindow: Uncloak event received for {Title}");
 
-            SetShowInTaskbar();
+            UpdateShowInTaskbar();
         }
 
         private void setIcon()
@@ -527,9 +430,14 @@ namespace ManagedShell.WindowsTasks
         */
         }
 
-        internal void SetMonitor()
+        internal void UpdateMonitor()
         {
-            HMonitor = NativeMethods.MonitorFromWindow(Handle, NativeMethods.MONITOR_DEFAULTTONEAREST);
+            HMonitor = GetCurrentMonitor();
+        }
+
+        private IntPtr GetCurrentMonitor()
+        {
+            return NativeMethods.MonitorFromWindow(Handle, NativeMethods.MONITOR_DEFAULTTONEAREST);
         }
 
         public void SetOverlayIcon(IntPtr hIcon)
@@ -581,7 +489,7 @@ namespace ManagedShell.WindowsTasks
         internal void UpdateProperties()
         {
             setTitle();
-            SetShowInTaskbar();
+            UpdateShowInTaskbar();
             setIcon();
         }
 
@@ -688,12 +596,9 @@ namespace ManagedShell.WindowsTasks
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public void OnPropertyChanged(string PropertyName)
+        public void InvokePropertyChanged(PropertyChangedEventArgs e)
         {
-            if (this.PropertyChanged != null)
-            {
-                this.PropertyChanged(this, new PropertyChangedEventArgs(PropertyName));
-            }
+            PropertyChanged?.Invoke(this, e);
         }
 
         #endregion

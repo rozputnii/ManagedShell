@@ -53,9 +53,9 @@ namespace ManagedShell.Common.SupportingClasses
         [DebuggerNonUserCode]
         private void OnPropertyChanged(string propName)
         {
-            if (this.PropertyChanged != null)
+            if (PropertyChanged != null)
             {
-                this.PropertyChanged(this, new PropertyChangedEventArgs(propName));
+                PropertyChanged(this, new PropertyChangedEventArgs(propName));
             }
         }
         #endregion

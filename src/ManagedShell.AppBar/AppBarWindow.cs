@@ -3,17 +3,17 @@ using ManagedShell.Common.Logging;
 using ManagedShell.Interop;
 using System;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using ManagedShell.Common.Extensions;
 
 namespace ManagedShell.AppBar
 {
-    public class AppBarWindow : Window, INotifyPropertyChanged
+    public class AppBarWindow : Window, INotifyPropertyChangedExtended
     {
         protected readonly AppBarManager _appBarManager;
         protected readonly ExplorerHelper _explorerHelper;
@@ -22,21 +22,12 @@ namespace ManagedShell.AppBar
         public AppBarScreen Screen;
         protected bool ProcessScreenChanges = true;
 
+        // needs to set correct!!!
         private double _dpiScale = 1.0;
         public double DpiScale
         {
-            get
-            {
-                return _dpiScale;
-            }
-            set
-            {
-                if (_dpiScale != value)
-                {
-                    _dpiScale = value;
-                    OnPropertyChanged();
-                }
-            }
+            get => _dpiScale;
+            set => this.SetProperty(ref _dpiScale, ref value);
         }
 
         // Window properties
@@ -53,50 +44,31 @@ namespace ManagedShell.AppBar
         // AppBar properties
         private int AppBarMessageId = -1;
 
-        private AppBarEdge _appBarEdge;
+        private AppBarEdge _appBarEdge = AppBarEdge.Left;
         public AppBarEdge AppBarEdge
         {
-            get
-            {
-                return _appBarEdge;
-            }
+            get => _appBarEdge;
             set
             {
-                _appBarEdge = value;
-                OnPropertyChanged();
-                OnPropertyChanged("Orientation");
+                this.SetProperty(ref _appBarEdge, ref value);
+                Orientation = value is AppBarEdge.Left or AppBarEdge.Right
+                    ? Orientation.Vertical
+                    : Orientation.Horizontal;
             }
         }
-        private AppBarMode _appBarMode;
+        private AppBarMode _appBarMode = AppBarMode.Normal;
         public AppBarMode AppBarMode
         {
-            get
-            {
-                return _appBarMode;
-            }
-            set
-            {
-                _appBarMode = value;
-                OnPropertyChanged();
-            }
+            get => _appBarMode;
+            set => this.SetProperty(ref _appBarMode, ref value);
         }
         private FrameworkElement _autoHideElement;
         public FrameworkElement AutoHideElement
         {
-            get
-            {
-                return _autoHideElement;
-            }
-            set
-            {
-                _autoHideElement = value;
-                OnPropertyChanged();
-            }
+            get => _autoHideElement;
+            set => this.SetProperty(ref _autoHideElement, value);
         }
-        public bool AllowAutoHide
-        {
-            get => ShouldAllowAutoHide();
-        }
+        public bool AllowAutoHide => ShouldAllowAutoHide();
         protected internal bool RequiresScreenEdge;
         protected double AutoHideShowMargin = 2;
         protected double AutoHideDelayMs = 400;
@@ -109,9 +81,11 @@ namespace ManagedShell.AppBar
         private bool _isContextMenuOpen;
         private DispatcherTimer _peekAutoHideTimer;
 
+        private Orientation _orientation = Orientation.Vertical;
         public Orientation Orientation
         {
-            get => (AppBarEdge == AppBarEdge.Left || AppBarEdge == AppBarEdge.Right) ? Orientation.Vertical : Orientation.Horizontal;
+            get => _orientation;
+            set => this.SetProperty(ref _orientation, ref value);
         }
 
         public AppBarWindow(AppBarManager appBarManager, ExplorerHelper explorerHelper, FullScreenHelper fullScreenHelper, AppBarScreen screen, AppBarEdge edge, AppBarMode mode, double size)
@@ -185,7 +159,7 @@ namespace ManagedShell.AppBar
                 if (AppBarMode == AppBarMode.AutoHide)
                 {
                     _appBarManager.RegisterAutoHideBar(this);
-                    OnPropertyChanged("AllowAutoHide");
+                    InvokePropertyChanged(new PropertyChangedEventArgs(nameof(AllowAutoHide)));
                 }
                 else
                 {
@@ -312,7 +286,7 @@ namespace ManagedShell.AppBar
             _fullScreenHelper.FullScreenApps.CollectionChanged += FullScreenApps_CollectionChanged;
 
             IsOpening = false;
-            OnPropertyChanged("AllowAutoHide");
+            InvokePropertyChanged(new PropertyChangedEventArgs(nameof(AllowAutoHide)));
         }
 
         protected virtual void OnAutoHideAnimationBegin(bool isHiding)
@@ -551,15 +525,9 @@ namespace ManagedShell.AppBar
             NativeMethods.SetWindowPos(Handle, IntPtr.Zero, rect.Left, rect.Top, rect.Width, rect.Height, swp);
         }
 
-        private void SetAutoHideStateVar(ref bool varToSet, bool newValue)
+        private void SetAutoHideStateVar(ref bool fieldToSet, bool newValue)
         {
-            bool currentAutoHide = AllowAutoHide;
-            varToSet = newValue;
-
-            if (AllowAutoHide != currentAutoHide)
-            {
-                OnPropertyChanged("AllowAutoHide");
-            }
+            this.SetProperty(ref fieldToSet, ref newValue, nameof(AllowAutoHide));
         }
 
         private void ProcessScreenChange(ScreenSetupReason reason)
@@ -681,7 +649,11 @@ namespace ManagedShell.AppBar
 
         protected virtual bool ShouldAllowAutoHide()
         {
-            return AppBarMode == AppBarMode.AutoHide && !_isMouseWithin && !_isContextMenuOpen && !_isDragWithin && (_peekAutoHideTimer == null || !_peekAutoHideTimer.IsEnabled);
+            return AppBarMode == AppBarMode.AutoHide && 
+                   !_isMouseWithin && 
+                   !_isContextMenuOpen && 
+                   !_isDragWithin && 
+                   _peekAutoHideTimer is not { IsEnabled: true };
         }
 
         protected virtual void CustomClosing() { }
@@ -752,11 +724,13 @@ namespace ManagedShell.AppBar
         #endregion
 
         #region INotifyPropertyChanged
+        
         public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = "")
+        public void InvokePropertyChanged(PropertyChangedEventArgs e)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            PropertyChanged?.Invoke(this, e);
         }
+
         #endregion
     }
 }

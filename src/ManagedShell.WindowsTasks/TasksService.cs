@@ -187,7 +187,7 @@ namespace ManagedShell.WindowsTasks
             {
                 ApplicationWindow win = Windows.First(wnd => wnd.Handle == hWndForeground);
                 win.State = ApplicationWindow.WindowState.Active;
-                win.SetShowInTaskbar();
+                win.UpdateShowInTaskbar();
             }
         }
 
@@ -336,7 +336,7 @@ namespace ManagedShell.WindowsTasks
                                 {
                                     ApplicationWindow win = Windows.First(wnd => wnd.Handle == msg.LParam);
                                     win.State = ApplicationWindow.WindowState.Inactive;
-                                    win.SetShowInTaskbar();
+                                    win.UpdateShowInTaskbar();
                                 }
                                 else
                                 {
@@ -366,7 +366,7 @@ namespace ManagedShell.WindowsTasks
                                     {
                                         win = Windows.First(wnd => wnd.Handle == msg.LParam);
                                         win.State = ApplicationWindow.WindowState.Active;
-                                        win.SetShowInTaskbar();
+                                        win.UpdateShowInTaskbar();
                                     }
                                     else
                                     {
@@ -378,7 +378,7 @@ namespace ManagedShell.WindowsTasks
                                         foreach (ApplicationWindow wind in Windows)
                                         {
                                             if (wind.WinFileName == win.WinFileName && wind.Handle != win.Handle)
-                                                wind.SetShowInTaskbar();
+                                                wind.UpdateShowInTaskbar();
                                         }
 
                                         WindowActivatedEventArgs args = new WindowActivatedEventArgs
@@ -613,7 +613,7 @@ namespace ManagedShell.WindowsTasks
                 if (Windows.Any(i => i.Handle == hWnd))
                 {
                     ApplicationWindow win = Windows.First(wnd => wnd.Handle == hWnd);
-                    win.SetMonitor();
+                    win.UpdateMonitor();
                 }
             }
         }
@@ -692,17 +692,11 @@ namespace ManagedShell.WindowsTasks
 
         internal ObservableCollection<ApplicationWindow> Windows
         {
-            get
-            {
-                return base.GetValue(windowsProperty) as ObservableCollection<ApplicationWindow>;
-            }
-            set
-            {
-                SetValue(windowsProperty, value);
-            }
+            get => GetValue(WindowsProperty) as ObservableCollection<ApplicationWindow>;
+            set => SetValue(WindowsProperty, value);
         }
 
-        private DependencyProperty windowsProperty = DependencyProperty.Register("Windows",
+        private static readonly DependencyProperty WindowsProperty = DependencyProperty.Register(nameof(Windows),
             typeof(ObservableCollection<ApplicationWindow>), typeof(TasksService),
             new PropertyMetadata(new ObservableCollection<ApplicationWindow>()));
     }
