@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Drawing;
 
 namespace ManagedShell.Common.Helpers
@@ -9,45 +10,20 @@ namespace ManagedShell.Common.Helpers
         private static double? _oldDpiScale;
         public static double OldDpiScale
         {
-            get
-            {
-                if (_oldDpiScale == null)
-                {
-                    _oldDpiScale = GetDpiScale();
-                }
-
-                return (double)_oldDpiScale;
-            }
-            set
-            {
-                _oldDpiScale = value;
-            }
+            get => _oldDpiScale ?? (_oldDpiScale = GetDpiScale()).Value;
+            set => _oldDpiScale = value;
         }
 
         // Current system DPI; typically set on AppBar startup and on WM_DPICHANGED
         private static double? _dpiScale;
         public static double DpiScale
         {
-            get
-            {
-                if (_dpiScale == null)
-                {
-                    _dpiScale = GetDpiScale();
-                }
-
-                return (double)_dpiScale;
-            }
-            set
-            {
-                _dpiScale = value;
-            }
+            get => _dpiScale ?? (_dpiScale = GetDpiScale()).Value;
+            set => _dpiScale = value;
         }
 
         // SystemParameters class returns values based on logon DPI only; this calculates how we should scale that number if logon DPI != current DPI.
-        public static double DpiScaleAdjustment
-        {
-            get { return DpiScale / OldDpiScale; }
-        }
+        public static double DpiScaleAdjustment => DpiScale / OldDpiScale;
 
         /// <summary>
         /// Transforms device independent units (1/96 of an inch)
@@ -71,10 +47,8 @@ namespace ManagedShell.Common.Helpers
 
         private static double GetDpiScale()
         {
-            using (Graphics g = Graphics.FromHwnd(IntPtr.Zero))
-            {
-                return (g.DpiX / 96);
-            }
+            using Graphics g = Graphics.FromHwnd(IntPtr.Zero);
+            return (g.DpiX / 96);
         }
 
     }
