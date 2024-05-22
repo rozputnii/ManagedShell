@@ -4,6 +4,17 @@
     <TargetFrameworks>net8.0-windows</TargetFrameworks>
     <UseWPF>true</UseWPF>
     <IncludeSymbols>true</IncludeSymbols>
+	  <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	  <PackageId>ManagedShell</PackageId>
+	  <Version>0.0.249-beta</Version>
+	  <Authors>Daniil Rozputnii</Authors>
+	  <Company>Ameria</Company>
+	  <Description>A library for creating Windows shell replacements using .NET.</Description>
+	  <PackageTags>Shell;Windows;Custom;Managed</PackageTags>
+	  <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+	  <RepositoryType>git</RepositoryType>
+	  <PackageProjectUrl>https://github.com/rozputnii/ManagedShell</PackageProjectUrl>
+	  <RepositoryUrl>https://github.com/rozputnii/ManagedShell.git</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
