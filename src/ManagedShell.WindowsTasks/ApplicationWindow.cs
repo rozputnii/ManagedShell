@@ -139,7 +139,6 @@ namespace ManagedShell.WindowsTasks
             catch { }
         }
 
-        private bool _iconLoading;
         private ImageSource _icon;
         private IntPtr _hIcon = IntPtr.Zero;
 
