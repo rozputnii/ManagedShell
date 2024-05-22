@@ -5,10 +5,9 @@
     <UseWPF>true</UseWPF>
     <IncludeSymbols>true</IncludeSymbols>
 	  <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-	  <PackageId>ManagedShell</PackageId>
-	  <Version>0.0.249-beta</Version>
+	  <PackageId>ManagedShell.Optimized</PackageId>
+	  <Version>1.0.1</Version>
 	  <Authors>Daniil Rozputnii</Authors>
-	  <Company>Ameria</Company>
 	  <Description>A library for creating Windows shell replacements using .NET.</Description>
 	  <PackageTags>Shell;Windows;Custom;Managed</PackageTags>
 	  <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -18,16 +17,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Reference all project and package dependencies to ensure they are included in the package -->
     <ProjectReference Include="..\ManagedShell.AppBar\ManagedShell.AppBar.csproj" PrivateAssets="all" />
-    <!--<ProjectReference Include="..\ManagedShell.Common\ManagedShell.Common.csproj" PrivateAssets="all" />-->
-    <!--<ProjectReference Include="..\ManagedShell.Interop\ManagedShell.Interop.csproj" PrivateAssets="all" />-->
-    <!--<ProjectReference Include="..\ManagedShell.ShellFolders\ManagedShell.ShellFolders.csproj" PrivateAssets="all" />-->
     <ProjectReference Include="..\ManagedShell.WindowsTasks\ManagedShell.WindowsTasks.csproj" PrivateAssets="all" />
-    <!--<ProjectReference Include="..\ManagedShell.WindowsTray\ManagedShell.WindowsTray.csproj" PrivateAssets="all" />-->
-    <!--<PackageReference Include="System.Data.OleDb" Version="8.0.0" />
-    <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
-    <PackageReference Include="System.ServiceProcess.ServiceController" Version="8.0.0" />-->
   </ItemGroup>
 
   <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="BuildOnlySettings;">

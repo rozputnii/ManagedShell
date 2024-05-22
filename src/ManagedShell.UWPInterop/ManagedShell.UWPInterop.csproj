@@ -19,11 +19,7 @@
     <ProjectReference Include="..\ManagedShell.Common\ManagedShell.Common.csproj" />
     <ProjectReference Include="..\ManagedShell.ShellFolders\ManagedShell.ShellFolders.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <!--<PackageReference Update="Nerdbank.GitVersioning" Version="3.6.133" />-->
-  </ItemGroup>
-
+	
 	<PropertyGroup>
 		<CsWinRTIncludes>
 			Windows.ApplicationModel.AddResourcePackageOptions;
