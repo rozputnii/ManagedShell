@@ -6,4 +6,8 @@
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ManagedShell.Common\ManagedShell.Common.csproj" />
+  </ItemGroup>
+
 </Project>

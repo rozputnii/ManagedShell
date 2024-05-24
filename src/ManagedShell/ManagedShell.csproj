@@ -6,7 +6,7 @@
     <IncludeSymbols>true</IncludeSymbols>
 	  <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	  <PackageId>ManagedShell.Optimized</PackageId>
-	  <Version>1.0.1</Version>
+	  <Version>1.0.2</Version>
 	  <Authors>Daniil Rozputnii</Authors>
 	  <Description>A library for creating Windows shell replacements using .NET.</Description>
 	  <PackageTags>Shell;Windows;Custom;Managed</PackageTags>
@@ -17,8 +17,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ManagedShell.AppBar\ManagedShell.AppBar.csproj" PrivateAssets="all" />
-    <ProjectReference Include="..\ManagedShell.WindowsTasks\ManagedShell.WindowsTasks.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\ManagedShell.AppBar\ManagedShell.AppBar.csproj" />
+    <ProjectReference Include="..\ManagedShell.WindowsTasks\ManagedShell.WindowsTasks.csproj" />
   </ItemGroup>
 
   <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="BuildOnlySettings;">
