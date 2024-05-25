@@ -4,12 +4,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
-    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net471'">
-    <Reference Include="Microsoft.VisualBasic" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ManagedShell.Common\ManagedShell.Common.csproj" />
