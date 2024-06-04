@@ -86,7 +86,7 @@ namespace ManagedShell.AppBar
             ResizeMode = ResizeMode.NoResize;
             ShowInTaskbar = false;
             Title = "";
-            Topmost = true;
+            //Topmost = true;
             UseLayoutRounding = true;
             WindowStyle = WindowStyle.None;
 
