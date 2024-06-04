@@ -37,8 +37,8 @@ namespace ManagedShell.AppBar
         public bool AllowClose;
         public bool IsClosing;
         public bool IsOpening = true;
-        protected double DesiredHeight;
-        protected double DesiredWidth;
+        public double DesiredHeight { get; set; }
+        public double DesiredWidth { get; set; }
         private bool EnableBlur;
 
         // AppBar properties
@@ -62,25 +62,9 @@ namespace ManagedShell.AppBar
             get => _appBarMode;
             set => this.SetProperty(ref _appBarMode, ref value);
         }
-        private FrameworkElement _autoHideElement;
-        public FrameworkElement AutoHideElement
-        {
-            get => _autoHideElement;
-            set => this.SetProperty(ref _autoHideElement, value);
-        }
-        public bool AllowAutoHide => ShouldAllowAutoHide();
+        
         protected internal bool RequiresScreenEdge;
-        protected double AutoHideShowMargin = 2;
-        protected double AutoHideDelayMs = 400;
-        protected double AutoHideShowDelayMs = 0;
-        protected double AutoHideAnimationMs = 300;
-        protected double AutoHideShowAnimationMs = 150;
-
-        private bool _isDragWithin;
-        private bool _isMouseWithin;
-        private bool _isContextMenuOpen;
-        private DispatcherTimer _peekAutoHideTimer;
-
+        
         private Orientation _orientation = Orientation.Vertical;
         public Orientation Orientation
         {
@@ -97,13 +81,6 @@ namespace ManagedShell.AppBar
             Closing += OnClosing;
             SourceInitialized += OnSourceInitialized;
 
-            PreviewDragEnter += AppBarWindow_PreviewDragEnter;
-            PreviewDragLeave += AppBarWindow_PreviewDragLeave;
-            PreviewDrop += AppBarWindow_PreviewDrop;
-            MouseEnter += AppBarWindow_MouseEnter;
-            MouseLeave += AppBarWindow_MouseLeave;
-            ContextMenuOpening += AppBarWindow_ContextMenuOpening;
-            ContextMenuClosing += AppBarWindow_ContextMenuClosing;
             PropertyChanged += AppBarWindow_PropertyChanged;
 
             ResizeMode = ResizeMode.NoResize;
@@ -134,18 +111,7 @@ namespace ManagedShell.AppBar
                 return;
             }
 
-            if (e.PropertyName == "AllowAutoHide")
-            {
-                if (AllowAutoHide)
-                {
-                    AnimateAutoHide(true);
-                }
-                else
-                {
-                    AnimateAutoHide(false);
-                }
-            }
-            else if (e.PropertyName == "AppBarMode")
+            if (e.PropertyName == nameof(AppBarMode))
             {
                 if (AppBarMode == AppBarMode.Normal)
                 {
@@ -159,87 +125,12 @@ namespace ManagedShell.AppBar
                 if (AppBarMode == AppBarMode.AutoHide)
                 {
                     _appBarManager.RegisterAutoHideBar(this);
-                    InvokePropertyChanged(new PropertyChangedEventArgs(nameof(AllowAutoHide)));
                 }
                 else
                 {
                     _appBarManager.UnregisterAutoHideBar(this);
-                    AnimateAutoHide(false, true);
                 }
             }
-        }
-
-        private void AnimateAutoHide(bool isHiding, bool immediate = false)
-        {
-            if (AutoHideElement == null)
-            {
-                return;
-            }
-
-            if (isHiding && AppBarMode != AppBarMode.AutoHide)
-            {
-                return;
-            }
-
-            double animTo = 0;
-
-            if (isHiding)
-            {
-                animTo = Orientation == Orientation.Horizontal ? DesiredHeight : DesiredWidth;
-                animTo -= AutoHideShowMargin;
-
-                if (AppBarEdge == AppBarEdge.Top || AppBarEdge == ((FlowDirection == FlowDirection.LeftToRight) ? AppBarEdge.Left : AppBarEdge.Right))
-                {
-                    animTo *= -1;
-                }
-            }
-
-            var animation = new DoubleAnimation(animTo, TimeSpan.FromMilliseconds(isHiding ? AutoHideAnimationMs : AutoHideShowAnimationMs).Duration());
-            animation.BeginTime = TimeSpan.FromMilliseconds(immediate ? 0 : isHiding ? AutoHideDelayMs : AutoHideShowDelayMs);
-            animation.EasingFunction = new SineEase();
-
-            Storyboard.SetTarget(animation, AutoHideElement);
-            Storyboard.SetTargetProperty(animation, new PropertyPath($"RenderTransform.(TranslateTransform.{(Orientation == Orientation.Horizontal ? 'Y' : 'X')})"));
-
-            var storyboard = new Storyboard();
-            storyboard.Children.Add(animation);
-
-            animation.CurrentStateInvalidated += (object sender, EventArgs e) => {
-                if (((AnimationClock)sender).CurrentState == ClockState.Active)
-                {
-                    OnAutoHideAnimationBegin(isHiding);
-                }
-            };
-
-            storyboard.Completed += (object sender, EventArgs e) => {
-                OnAutoHideAnimationComplete(isHiding);
-            };
-
-            storyboard.Begin(AutoHideElement);
-        }
-
-        protected void PeekDuringAutoHide(int msToPeek = 1000)
-        {
-            if (AppBarMode != AppBarMode.AutoHide)
-            {
-                return;
-            }
-
-            _peekAutoHideTimer?.Stop();
-
-            AnimateAutoHide(false, true);
-
-            _peekAutoHideTimer = new DispatcherTimer();
-            _peekAutoHideTimer.Interval = TimeSpan.FromMilliseconds(msToPeek);
-            _peekAutoHideTimer.Tick += (object sender, EventArgs e) =>
-            {
-                _peekAutoHideTimer?.Stop();
-                if (AllowAutoHide)
-                {
-                    AnimateAutoHide(true, true);
-                }
-            };
-            _peekAutoHideTimer.Start();
         }
 
         #region Events
@@ -286,25 +177,6 @@ namespace ManagedShell.AppBar
             _fullScreenHelper.FullScreenApps.CollectionChanged += FullScreenApps_CollectionChanged;
 
             IsOpening = false;
-            InvokePropertyChanged(new PropertyChangedEventArgs(nameof(AllowAutoHide)));
-        }
-
-        protected virtual void OnAutoHideAnimationBegin(bool isHiding)
-        {
-            if (isHiding && EnableBlur && Handle != IntPtr.Zero && AllowsTransparency && AllowAutoHide)
-            {
-                // Disable blur if enabled and hiding
-                WindowHelper.SetWindowBlur(Handle, false);
-            }
-        }
-
-        protected virtual void OnAutoHideAnimationComplete(bool isHiding)
-        {
-            if (!isHiding && EnableBlur && Handle != IntPtr.Zero && AllowsTransparency && !AllowAutoHide)
-            {
-                // Re-enable blur if enabled and showing
-                WindowHelper.SetWindowBlur(Handle, true);
-            }
         }
 
         private void OnClosing(object sender, CancelEventArgs e)
@@ -352,45 +224,7 @@ namespace ManagedShell.AppBar
             }
         }
 
-        private void AppBarWindow_ContextMenuClosing(object sender, ContextMenuEventArgs e)
-        {
-            SetAutoHideStateVar(ref _isContextMenuOpen, false);
-        }
-
-        private void AppBarWindow_ContextMenuOpening(object sender, ContextMenuEventArgs e)
-        {
-            // ContextMenuOpening fires even if the element has no context menu defined, so we must check
-            if (HasContextMenu(e.OriginalSource as FrameworkElement))
-            {
-                SetAutoHideStateVar(ref _isContextMenuOpen, true);
-            }
-        }
-
-        private void AppBarWindow_PreviewDragEnter(object sender, DragEventArgs e)
-        {
-            SetAutoHideStateVar(ref _isDragWithin, true);
-        }
-
-        private void AppBarWindow_PreviewDragLeave(object sender, DragEventArgs e)
-        {
-            SetAutoHideStateVar(ref _isDragWithin, false);
-        }
-
-        private void AppBarWindow_PreviewDrop(object sender, DragEventArgs e)
-        {
-            SetAutoHideStateVar(ref _isDragWithin, false);
-        }
-
-        private void AppBarWindow_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            SetAutoHideStateVar(ref _isMouseWithin, true);
-        }
-
-        private void AppBarWindow_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            SetAutoHideStateVar(ref _isMouseWithin, false);
-        }
-
+       
         protected virtual IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             if (msg == AppBarMessageId && AppBarMessageId != -1)
@@ -525,10 +359,6 @@ namespace ManagedShell.AppBar
             NativeMethods.SetWindowPos(Handle, IntPtr.Zero, rect.Left, rect.Top, rect.Width, rect.Height, swp);
         }
 
-        private void SetAutoHideStateVar(ref bool fieldToSet, bool newValue)
-        {
-            this.SetProperty(ref fieldToSet, ref newValue, nameof(AllowAutoHide));
-        }
 
         private void ProcessScreenChange(ScreenSetupReason reason)
         {
@@ -579,21 +409,6 @@ namespace ManagedShell.AppBar
             }
         }
 
-        protected void SetBlur(bool enable)
-        {
-            if (EnableBlur != enable && Handle != IntPtr.Zero && AllowsTransparency)
-            {
-                EnableBlur = enable;
-
-                if (enable && AppBarMode == AppBarMode.AutoHide && AllowAutoHide)
-                {
-                    // If we're auto-hidden, don't actually enable blur right now.
-                    return;
-                }
-
-                WindowHelper.SetWindowBlur(Handle, enable);
-            }
-        }
 
         protected void RegisterAppBar()
         {
@@ -646,16 +461,7 @@ namespace ManagedShell.AppBar
                 timer.Start();
             }
         }
-
-        protected virtual bool ShouldAllowAutoHide()
-        {
-            return AppBarMode == AppBarMode.AutoHide && 
-                   !_isMouseWithin && 
-                   !_isContextMenuOpen && 
-                   !_isDragWithin && 
-                   _peekAutoHideTimer is not { IsEnabled: true };
-        }
-
+        
         protected virtual void CustomClosing() { }
 
         protected virtual void SetScreenProperties(ScreenSetupReason reason)
