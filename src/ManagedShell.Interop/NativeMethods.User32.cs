@@ -276,8 +276,8 @@ namespace ManagedShell.Interop
         [DllImport(User32_DllName)]
         public static extern uint SendMessageTimeout(IntPtr hWnd, uint messageId, IntPtr wparam, IntPtr lparam, uint timeoutFlags, uint timeout, ref IntPtr retval);
 
-        [DllImport(User32_DllName)]
-        public static extern uint SendMessageTimeout(IntPtr hWnd, uint messageId, uint wparam, uint lparam, uint timeoutFlags, uint timeout, ref IntPtr retval);
+        //[DllImport(User32_DllName)]
+        //public static extern uint SendMessageTimeout(IntPtr hWnd, uint messageId, uint wparam, uint lparam, uint timeoutFlags, uint timeout, ref IntPtr retval);
 
         [DllImport(User32_DllName)]
         public static extern IntPtr SendMessage(IntPtr hWnd, int messageId, IntPtr wparam, IntPtr lparam);
