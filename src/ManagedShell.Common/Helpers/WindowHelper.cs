@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using static ManagedShell.Interop.NativeMethods;
 
@@ -131,7 +132,7 @@ namespace ManagedShell.Common.Helpers
             }
         }
 
-        public static void SetWindowBlur(IntPtr hWnd, bool enable)
+        public static void SetWindowBlur(IntPtr hWnd, bool enable, Color? color = null)
         {
             if (EnvironmentHelper.IsWindows10OrBetter)
             {
@@ -144,7 +145,7 @@ namespace ManagedShell.Common.Helpers
                     if (EnvironmentHelper.IsWindows10RS4OrBetter)
                     {
                         accent.AccentState = AccentState.ACCENT_ENABLE_ACRYLICBLURBEHIND;
-                        accent.GradientColor = (0 << 24) | (0xFFFFFF /* BGR */ & 0xFFFFFF);
+                        accent.GradientColor = CalculateGradientColor(color ?? Color.White);
                     }
                     else
                     {
@@ -168,6 +169,16 @@ namespace ManagedShell.Common.Helpers
 
                 Marshal.FreeHGlobal(accentPtr);
             }
+        }
+
+        private static int CalculateGradientColor(Color color)
+        {
+            // Alpha value (transparency) in the highest byte
+            int alpha = color.A;
+            // Convert the color to BGR format and shift it to the lower 3 bytes
+            int bgr = (color.B << 16) | (color.G << 8) | color.R;
+            // Combine alpha and BGR into a single 32-bit integer
+            return (alpha << 24) | (bgr & 0xFFFFFF);
         }
 
         public static bool SetDarkModePreference(PreferredAppMode mode)
