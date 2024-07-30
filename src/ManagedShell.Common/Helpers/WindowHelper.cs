@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Windows.Media;
 using static ManagedShell.Interop.NativeMethods;
 
 namespace ManagedShell.Common.Helpers
@@ -145,7 +145,7 @@ namespace ManagedShell.Common.Helpers
                     if (EnvironmentHelper.IsWindows10RS4OrBetter)
                     {
                         accent.AccentState = AccentState.ACCENT_ENABLE_ACRYLICBLURBEHIND;
-                        accent.GradientColor = CalculateGradientColor(color ?? Color.White);
+                        accent.GradientColor = CalculateGradientColor(color ?? Color.FromRgb(255, 255, 255));
                     }
                     else
                     {
