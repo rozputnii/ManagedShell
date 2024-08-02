@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Windows.Media;
+using ManagedShell.Interop;
+using Microsoft.Win32;
 using static ManagedShell.Interop.NativeMethods;
 
 namespace ManagedShell.Common.Helpers
@@ -132,42 +134,85 @@ namespace ManagedShell.Common.Helpers
             }
         }
 
-        public static void SetWindowBlur(IntPtr hWnd, bool enable, Color? color = null)
+        public static bool SetWindowBlur(IntPtr hWnd, bool enable, Color? color = null)
         {
-            if (EnvironmentHelper.IsWindows10OrBetter)
+            if (!EnvironmentHelper.IsWindows10OrBetter || !IsWindowBlurSupportedAndEnabled()) 
+                return false;
+
+
+            // https://github.com/riverar/sample-win32-acrylicblur
+            // License: MIT
+            var accent = new AccentPolicy();
+            var accentStructSize = Marshal.SizeOf(accent);
+            if (enable)
             {
-                // https://github.com/riverar/sample-win32-acrylicblur
-                // License: MIT
-                var accent = new AccentPolicy();
-                var accentStructSize = Marshal.SizeOf(accent);
-                if (enable)
+                if (EnvironmentHelper.IsWindows10RS4OrBetter)
                 {
-                    if (EnvironmentHelper.IsWindows10RS4OrBetter)
-                    {
-                        accent.AccentState = AccentState.ACCENT_ENABLE_ACRYLICBLURBEHIND;
-                        accent.GradientColor = CalculateGradientColor(color ?? Color.FromRgb(255, 255, 255));
-                    }
-                    else
-                    {
-                        accent.AccentState = AccentState.ACCENT_ENABLE_BLURBEHIND;
-                    }
+                    accent.AccentState = AccentState.ACCENT_ENABLE_ACRYLICBLURBEHIND;
+                    accent.GradientColor = CalculateGradientColor(color ?? Color.FromRgb(255, 255, 255));
                 }
                 else
                 {
-                    accent.AccentState = AccentState.ACCENT_DISABLED;
+                    accent.AccentState = AccentState.ACCENT_ENABLE_BLURBEHIND;
+                }
+            }
+            else
+            {
+                accent.AccentState = AccentState.ACCENT_DISABLED;
+            }
+
+            var accentPtr = Marshal.AllocHGlobal(accentStructSize);
+            Marshal.StructureToPtr(accent, accentPtr, false);
+
+            var data = new WindowCompositionAttributeData
+            {
+                Attribute = WindowCompositionAttribute.WCA_ACCENT_POLICY,
+                SizeOfData = accentStructSize,
+                Data = accentPtr
+            };
+
+            SetWindowCompositionAttribute(hWnd, ref data);
+
+            Marshal.FreeHGlobal(accentPtr);
+
+            return true;
+        }
+
+        // Import the DwmIsCompositionEnabled function from dwmapi.dll
+        [DllImport("dwmapi.dll", PreserveSig = false)]
+        private static extern void DwmIsCompositionEnabled(out bool pfEnabled);
+
+        // Static method to check if window blur is supported and enabled
+        public static bool IsWindowBlurSupportedAndEnabled()
+        {
+            try
+            {
+                // Check if DWM composition is enabled
+                DwmIsCompositionEnabled(out var isCompositionEnabled);
+                return isCompositionEnabled && IsTransparencyEffectsEnabled();
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool IsTransparencyEffectsEnabled()
+        {
+            try
+            {
+                using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+                var value = key?.GetValue("EnableTransparency");
+                if (value is int intValue)
+                {
+                    return intValue == 1;
                 }
 
-                var accentPtr = Marshal.AllocHGlobal(accentStructSize);
-                Marshal.StructureToPtr(accent, accentPtr, false);
-
-                var data = new WindowCompositionAttributeData();
-                data.Attribute = WindowCompositionAttribute.WCA_ACCENT_POLICY;
-                data.SizeOfData = accentStructSize;
-                data.Data = accentPtr;
-
-                SetWindowCompositionAttribute(hWnd, ref data);
-
-                Marshal.FreeHGlobal(accentPtr);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
             }
         }
 
