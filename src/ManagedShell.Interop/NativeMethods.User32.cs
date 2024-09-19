@@ -1751,7 +1751,7 @@ namespace ManagedShell.Interop
             ACCENT_ENABLE_TRANSPARENTGRADIENT = 2,
             ACCENT_ENABLE_BLURBEHIND = 3,
             ACCENT_ENABLE_ACRYLICBLURBEHIND = 4,
-            ACCENT_INVALID_STATE = 5
+            ACCENT_ENABLE_HOSTBACKDROP = 5
         }
 
         [StructLayout(LayoutKind.Sequential)]
